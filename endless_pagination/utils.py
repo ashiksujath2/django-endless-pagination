@@ -164,11 +164,6 @@ def get_querystring_for_page(
     """Return a querystring pointing to *page_number*."""
     querydict = request.GET.copy()
     querydict[querystring_key] = page_number
-    # For the default page number (usually 1) the querystring is not required.
-    if page_number == default_number:
-        del querydict[querystring_key]
-    if 'querystring_key' in querydict:
-        del querydict['querystring_key']
     if querydict:
         return '?' + querydict.urlencode()
     return ''

@@ -5,6 +5,7 @@ import re
 
 from django import template
 from django.utils.encoding import iri_to_uri
+from django.http import Http404
 
 from endless_pagination import (
     models,
@@ -310,7 +311,7 @@ class PaginateNode(template.Node):
         try:
             page = paginator.page(page_number)
         except EmptyPage:
-            page = paginator.page(1)
+            raise Http404
 
         # Populate the context with required data.
         data = {
@@ -345,25 +346,40 @@ def show_more(context, label=None, loading=settings.LOADING):
     # *paginate* or *lazy_paginate* before including the showmore template.
     data = utils.get_data_from_context(context)
     page = data['page']
+    querystring_key = data['querystring_key']
+
+    page_info = {}
     # show the template only if there is a next page
     if page.has_next():
         request = context['request']
         page_number = page.next_page_number()
+
         # Generate the querystring.
-        querystring_key = data['querystring_key']
         querystring = utils.get_querystring_for_page(
             request, page_number, querystring_key,
             default_number=data['default_number'])
-        return {
+
+        page_info.update({
             'label': label,
             'loading': loading,
             'path': iri_to_uri(data['override_path'] or request.path),
             'querystring': querystring,
             'querystring_key': querystring_key,
             'request': request,
-        }
+        })
+
+        context['next_querystring'] = querystring
+
+    if page.has_previous():
+        page_number = page.previous_page_number()
+        querystring = utils.get_querystring_for_page(
+            request, page_number, querystring_key,
+            default_number=data['default_number'])
+
+        context['previous_querystring'] = querystring
+
     # No next page, nothing to see.
-    return {}
+    return page_info
 
 
 @register.tag
