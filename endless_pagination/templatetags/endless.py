@@ -347,11 +347,11 @@ def show_more(context, label=None, loading=settings.LOADING):
     data = utils.get_data_from_context(context)
     page = data['page']
     querystring_key = data['querystring_key']
+    request = context['request']
 
     page_info = {}
     # show the template only if there is a next page
     if page.has_next():
-        request = context['request']
         page_number = page.next_page_number()
 
         # Generate the querystring.
